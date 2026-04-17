@@ -4,7 +4,7 @@ LaraScope is a Laravel package for HTTP request logging and monitoring. It captu
 
 ## Architecture
 
-```
+```ini
 HTTP Request
   → LaraScopeMiddleware (captures timing + SQL via DB::listen)
     → RequestLogger (builds structured payload)
@@ -30,25 +30,30 @@ Key source files:
 ## Key Conventions
 
 ### Driver Pattern
+
 - `DatabaseDriver` is the only driver today; more can be added (e.g., `FileDriver`)
 - Each driver must implement a `log(array $data): void` method
 - Register new drivers via the service provider (swap the singleton binding for `DatabaseDriver`)
 
 ### Singleton & Octane Safety
+
 - Middleware and `RequestLogger` are bound as **singletons**
 - `LaraScopeMiddleware::handle()` **must** reset per-request state (`$collectedQueries`, `$shouldSkip`) to prevent state leakage under Octane or other persistent runtimes
 
 ### Configuration
+
 - All options read from `config/larascope.php`; the Eloquent model and migration both use the configured connection/table
 - Sensitive headers (`authorization`, `cookie`, `x-csrf-token`) are stripped by default
 - Request/response bodies are **off** by default for privacy
 
 ### Middleware Registration
+
 - Automatically pushed into groups listed in `config('larascope.middleware_groups')` (default: `['web', 'api']`)
 - Dashboard routes are auto-excluded to prevent recursive logging
 - Path exclusions support wildcard patterns via `Str::is()`
 
 ### Error Handling
+
 - `LaraScopeMiddleware` wraps the logging call in try/catch – logging failures must never break the request
 - `DatabaseDriver` catches insert failures and writes the payload to the Laravel log as a fallback
 
