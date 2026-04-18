@@ -2,7 +2,7 @@
 
 namespace AmjadAH\LaraScope\Tests\Unit;
 
-use AmjadAH\LaraScope\Services\Drivers\DatabaseDriver;
+use AmjadAH\LaraScope\Services\DatabaseDriver;
 use AmjadAH\LaraScope\Services\RequestLogger;
 use AmjadAH\LaraScope\Tests\TestCase;
 use Illuminate\Http\Request;

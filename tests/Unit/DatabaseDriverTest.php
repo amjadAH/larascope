@@ -2,7 +2,7 @@
 
 namespace AmjadAH\LaraScope\Tests\Unit;
 
-use AmjadAH\LaraScope\Services\Drivers\DatabaseDriver;
+use AmjadAH\LaraScope\Services\DatabaseDriver;
 use AmjadAH\LaraScope\Tests\TestCase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

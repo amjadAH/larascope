@@ -2,7 +2,7 @@
 
 namespace AmjadAH\LaraScope\Services;
 
-use AmjadAH\LaraScope\Services\Drivers\DatabaseDriver;
+use AmjadAH\LaraScope\Services\DatabaseDriver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;

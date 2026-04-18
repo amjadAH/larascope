@@ -1,6 +1,17 @@
 {
     "name": "amjad-ah/larascope",
     "description": "A Laravel package that logs HTTP requests, duration, status, SQL queries, and memory usage.",
+    "keywords": [
+        "l",
+        "logging",
+        "http",
+        "request",
+        "monitoring",
+        "sql",
+        "dashboard",
+        "debugging",
+        "performance"
+    ],
     "type": "library",
     "license": "MIT",
     "authors": [

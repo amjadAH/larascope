@@ -20,7 +20,7 @@ Key source files:
 | [src/LaraScopeServiceProvider.php](src/LaraScopeServiceProvider.php) | Bootstraps package: config merge, singleton bindings, middleware registration, publishable assets |
 | [src/Http/Middleware/LaraScopeMiddleware.php](src/Http/Middleware/LaraScopeMiddleware.php) | Captures `$startTime` and SQL queries; calls `RequestLogger` in `terminate()` |
 | [src/Services/RequestLogger.php](src/Services/RequestLogger.php) | Transforms raw request/response into a structured 15-field payload |
-| [src/Services/Drivers/DatabaseDriver.php](src/Services/Drivers/DatabaseDriver.php) | Persists payload to DB; on failure, falls back to the application log |
+| [src/Services/DatabaseDriver.php](src/Services/DatabaseDriver.php) | Persists payload to DB; on failure, falls back to the application log |
 | [src/Models/RequestLog.php](src/Models/RequestLog.php) | Eloquent model; JSON casts, `hasSlowQueries()`, `withQueries()` scope |
 | [src/Http/Controllers/DashboardController.php](src/Http/Controllers/DashboardController.php) | Dashboard list (filtered) and detail views |
 | [src/Console/Commands/PruneLogsCommand.php](src/Console/Commands/PruneLogsCommand.php) | `php artisan larascope:prune` – deletes logs older than `pruning.retain_days` |
@@ -28,12 +28,6 @@ Key source files:
 | [database/migrations/2026_04_17_000000_create_larascope_request_logs_table.php](database/migrations/2026_04_17_000000_create_larascope_request_logs_table.php) | Creates `larascope_request_logs` table |
 
 ## Key Conventions
-
-### Driver Pattern
-
-- `DatabaseDriver` is the only driver today; more can be added (e.g., `FileDriver`)
-- Each driver must implement a `log(array $data): void` method
-- Register new drivers via the service provider (swap the singleton binding for `DatabaseDriver`)
 
 ### Singleton & Octane Safety
 
