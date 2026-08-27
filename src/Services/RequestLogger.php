@@ -1,8 +1,8 @@
 <?php
 
-namespace AmjadAH\LaraScope\Services;
+namespace Amjad\LaraScope\Services;
 
-use AmjadAH\LaraScope\Services\DatabaseDriver;
+use Amjad\LaraScope\Services\DatabaseDriver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,6 +35,8 @@ class RequestLogger
             return $query;
         }, $collectedQueries);
 
+        $hasSlowQueries = collect($queriesWithSlowFlag)->contains('slow', true);
+
         return [
             'method'          => $request->method(),
             'url'             => $request->fullUrl(),
@@ -47,6 +49,7 @@ class RequestLogger
             'memory_peak_mb'  => $memoryPeakMb,
             'query_count'     => count($queriesWithSlowFlag),
             'queries'         => $queriesWithSlowFlag,
+            'has_slow_queries' => $hasSlowQueries,
             'request_headers' => $this->buildRequestHeaders($request),
             'request_body'    => $this->buildRequestBody($request),
             'response_body'   => $this->buildResponseBody($response),

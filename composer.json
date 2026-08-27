@@ -1,5 +1,5 @@
 {
-    "name": "amjad-ah/larascope",
+    "name": "amjdhsan/larascope",
     "description": "A Laravel package that logs HTTP requests, duration, status, SQL queries, and memory usage.",
     "keywords": [
         "laravel",
@@ -16,7 +16,7 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "AmjadAH",
+            "name": "Amjad Hassan",
             "email": "hi@amjad.codes"
         }
     ],
@@ -33,18 +33,18 @@
     },
     "autoload": {
         "psr-4": {
-            "AmjadAH\\LaraScope\\": "src/"
+            "Amjad\\LaraScope\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "AmjadAH\\LaraScope\\Tests\\": "tests/"
+            "Amjad\\LaraScope\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "AmjadAH\\LaraScope\\LaraScopeServiceProvider"
+                "Amjad\\LaraScope\\LaraScopeServiceProvider"
             ]
         }
     },

@@ -19,10 +19,12 @@ Key source files:
 |------|------|
 | [src/LaraScopeServiceProvider.php](src/LaraScopeServiceProvider.php) | Bootstraps package: config merge, singleton bindings, middleware registration, publishable assets |
 | [src/Http/Middleware/LaraScopeMiddleware.php](src/Http/Middleware/LaraScopeMiddleware.php) | Captures `$startTime` and SQL queries; calls `RequestLogger` in `terminate()` |
-| [src/Services/RequestLogger.php](src/Services/RequestLogger.php) | Transforms raw request/response into a structured 15-field payload |
+| [src/Services/RequestLogger.php](src/Services/RequestLogger.php) | Transforms raw request/response into a structured 16-field payload |
 | [src/Services/DatabaseDriver.php](src/Services/DatabaseDriver.php) | Persists payload to DB; on failure, falls back to the application log |
 | [src/Models/RequestLog.php](src/Models/RequestLog.php) | Eloquent model; JSON casts, `hasSlowQueries()`, `withQueries()` scope |
 | [src/Http/Controllers/DashboardController.php](src/Http/Controllers/DashboardController.php) | Dashboard list (filtered) and detail views |
+| [src/Http/Filters/RequestLogFilters.php](src/Http/Filters/RequestLogFilters.php) | Turns dashboard query-string parameters into query constraints; also supplies the view's chip/active-state helpers |
+| [src/Services/RequestLogStats.php](src/Services/RequestLogStats.php) | One-round-trip aggregate (count, error rate, avg/max duration, slow count) over the filtered query |
 | [src/Console/Commands/PruneLogsCommand.php](src/Console/Commands/PruneLogsCommand.php) | `php artisan larascope:prune` – deletes logs older than `pruning.retain_days` |
 | [config/larascope.php](config/larascope.php) | Single source of truth for all configuration |
 | [database/migrations/2026_04_17_000000_create_larascope_request_logs_table.php](database/migrations/2026_04_17_000000_create_larascope_request_logs_table.php) | Creates `larascope_request_logs` table |
@@ -75,6 +77,19 @@ composer install
 ## Dashboard
 
 - Accessible at `/{larascope.dashboard.path}` (default: `/larascope`)
-- Filtered by method, status code, and path substring
 - Detail view shows SQL queries with bindings, headers, memory, and duration
 - Tailwind CSS is loaded via CDN – no asset pipeline needed
+
+### Filtering
+
+- All filter parsing lives in `RequestLogFilters`; the controller stays thin. Add a new filter there, not in the controller or the Blade views
+- Filters must ignore unknown, blank and malformed input rather than throwing — a hand-edited URL should never produce an error page
+- `apply()` filters and `applySort()` orders, deliberately kept separate so `RequestLogStats` can aggregate over the filtered set without an ORDER BY
+- Filterable columns are indexed in the migration; substring filters (`path`, `route_name`, `ip_address`) use a leading wildcard and are intentionally not indexed
+- "Has slow queries" is a real indexed column, not a JSON lookup — `whereJsonContains` has no portable partial-object match across MySQL/PostgreSQL/SQLite
+
+### Views
+
+- Theme tokens are CSS custom properties (RGB triples) wired into the Tailwind CDN config, so `bg-surface` / `text-muted` work in both themes without `dark:` variants. Add new colours as tokens in `layout.blade.php`, not as raw Tailwind palette classes
+- Aggregate SQL must stay portable: no comparing boolean columns to integers, no percentile functions
+- Blade gotcha: a directive glued to a word (`Queries@if`) is not compiled — `\B@` in Blade's regex requires a non-word character before the `@`

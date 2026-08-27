@@ -30,11 +30,22 @@ return new class extends Migration
             $table->decimal('duration_ms', 10, 2);
             $table->decimal('memory_peak_mb', 10, 4);
             $table->unsignedInteger('query_count')->default(0);
+            $table->boolean('has_slow_queries')->default(false);
             $table->json('queries')->nullable();
             $table->json('request_headers')->nullable();
             $table->json('request_body')->nullable();
             $table->json('response_body')->nullable();
             $table->timestamp('created_at')->useCurrent();
+
+            // Indexes backing the dashboard filters. Substring filters
+            // (path, route_name, ip_address) use a leading wildcard and
+            // cannot use an index, so they are deliberately not indexed.
+            $table->index('created_at');
+            $table->index('method');
+            $table->index('status_code');
+            $table->index('user_id');
+            $table->index('duration_ms');
+            $table->index('has_slow_queries');
         });
     }
 

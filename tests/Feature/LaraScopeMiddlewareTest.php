@@ -1,10 +1,10 @@
 <?php
 
-namespace AmjadAH\LaraScope\Tests\Feature;
+namespace Amjad\LaraScope\Tests\Feature;
 
-use AmjadAH\LaraScope\Http\Middleware\LaraScopeMiddleware;
-use AmjadAH\LaraScope\Services\RequestLogger;
-use AmjadAH\LaraScope\Tests\TestCase;
+use Amjad\LaraScope\Http\Middleware\LaraScopeMiddleware;
+use Amjad\LaraScope\Services\RequestLogger;
+use Amjad\LaraScope\Tests\TestCase;
 use Illuminate\Http\Request;
 use Mockery;
 use Mockery\MockInterface;
