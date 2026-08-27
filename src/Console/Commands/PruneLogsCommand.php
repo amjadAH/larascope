@@ -1,6 +1,6 @@
 <?php
 
-namespace AmjadAH\LaraScope\Console\Commands;
+namespace Amjad\LaraScope\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;

@@ -1,10 +1,12 @@
 <?php
 
-namespace AmjadAH\LaraScope;
+namespace Amjad\LaraScope;
 
-use AmjadAH\LaraScope\Console\Commands\PruneLogsCommand;
-use AmjadAH\LaraScope\Http\Middleware\LaraScopeMiddleware;
-use AmjadAH\LaraScope\Services\RequestLogger;
+use Amjad\LaraScope\Console\Commands\PruneLogsCommand;
+use Amjad\LaraScope\Http\Middleware\LaraScopeMiddleware;
+use Amjad\LaraScope\Services\RequestLogger;
+use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
+use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 
@@ -68,12 +70,41 @@ class LaraScopeServiceProvider extends ServiceProvider
 
         $router->aliasMiddleware('larascope', LaraScopeMiddleware::class);
 
-        if (config('larascope.enabled', true)) {
-            $middlewareGroups = config('larascope.middleware_groups', ['web', 'api']);
-
-            foreach ($middlewareGroups as $middlewareGroup) {
-                $router->pushMiddlewareToGroup($middlewareGroup, LaraScopeMiddleware::class);
-            }
+        if (!config('larascope.enabled', true)) {
+            return;
         }
+
+        $middlewareGroups = config('larascope.middleware_groups', ['web', 'api']);
+        $httpKernel       = $this->resolveHttpKernel();
+
+        foreach ($middlewareGroups as $middlewareGroup) {
+            // Prefer registering through the HTTP kernel: it owns the canonical
+            // group list and re-syncs it onto the router — replacing each group
+            // wholesale — whenever any package touches kernel middleware (Laravel
+            // Sanctum does exactly that from its boot()). A middleware pushed
+            // straight onto the router is silently dropped by that sync.
+            if ($httpKernel instanceof HttpKernel) {
+                $httpKernel->appendMiddlewareToGroup($middlewareGroup, LaraScopeMiddleware::class);
+
+                continue;
+            }
+
+            $router->pushMiddlewareToGroup($middlewareGroup, LaraScopeMiddleware::class);
+        }
+    }
+
+    /**
+     * The HTTP kernel, or null when the application has no kernel to register
+     * middleware with (a console-only or non-standard container).
+     */
+    private function resolveHttpKernel(): ?HttpKernel
+    {
+        if (!$this->app->bound(HttpKernelContract::class)) {
+            return null;
+        }
+
+        $httpKernel = $this->app->make(HttpKernelContract::class);
+
+        return $httpKernel instanceof HttpKernel ? $httpKernel : null;
     }
 }

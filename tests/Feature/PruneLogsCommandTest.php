@@ -1,8 +1,8 @@
 <?php
 
-namespace AmjadAH\LaraScope\Tests\Feature;
+namespace Amjad\LaraScope\Tests\Feature;
 
-use AmjadAH\LaraScope\Tests\TestCase;
+use Amjad\LaraScope\Tests\TestCase;
 use Illuminate\Support\Facades\DB;
 
 class PruneLogsCommandTest extends TestCase

@@ -1,157 +1,166 @@
 @extends('larascope::layout')
 
-@section('title', 'Request Logs')
+@section('title', 'Request logs')
 
 @section('content')
 
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Request Logs</h1>
-    <p class="text-gray-500 text-sm mt-1">{{ number_format($requestLogs->total()) }} total entries</p>
-</div>
+<h1 class="mb-5 text-lg font-semibold tracking-tight text-ink">Request logs</h1>
 
-{{-- Filters --}}
-<form method="GET"
-      class="bg-white border border-gray-200 rounded-lg p-4 mb-6 flex flex-wrap gap-3 items-end">
-    <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">Method</label>
-        <select name="method"
-                class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
-            <option value="">All</option>
-            @foreach (['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as $httpMethod)
-                <option value="{{ $httpMethod }}" @selected(request('method') === $httpMethod)>
-                    {{ $httpMethod }}
-                </option>
-            @endforeach
-        </select>
-    </div>
+@include('larascope::dashboard.partials.summary')
+@include('larascope::dashboard.partials.filters')
 
-    <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">Status</label>
-        <input type="number" name="status" value="{{ request('status') }}" placeholder="e.g. 200"
-               class="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-indigo-400">
-    </div>
-
-    <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">Path</label>
-        <input type="text" name="path" value="{{ request('path') }}" placeholder="e.g. api/users"
-               class="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-indigo-400">
-    </div>
-
-    <div class="flex gap-2">
-        <button type="submit"
-                class="bg-indigo-600 text-white text-sm px-4 py-1.5 rounded-md hover:bg-indigo-700 transition-colors">
-            Filter
-        </button>
-        <a href="{{ route('larascope.index') }}"
-           class="text-sm px-4 py-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors">
-            Clear
-        </a>
-    </div>
-</form>
-
-{{-- Table --}}
-<div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+<div class="rounded-md border border-rule bg-surface overflow-hidden">
     @if ($requestLogs->isEmpty())
-        <div class="py-20 text-center text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-3 text-gray-300" fill="none"
-                 viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        <div class="px-6 py-20 text-center">
+            <svg class="mx-auto mb-4 h-8 w-16 text-rule" viewBox="0 0 28 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M0 12h28" />
             </svg>
-            <p class="text-base font-medium">No request logs found.</p>
-            <p class="text-sm mt-1">Make some HTTP requests and they will appear here.</p>
+
+            @if ($filters->isActive())
+                <p class="text-sm font-medium text-ink">No requests match these filters.</p>
+                <p class="mt-1 text-sm text-muted">Widen the time range or drop a filter to see more.</p>
+                <a href="{{ route('larascope.index') }}"
+                   class="mt-4 inline-block rounded border border-rule px-3 py-1.5 font-mono text-xs text-muted hover:text-ink hover:border-muted transition-colors">
+                    Reset filters
+                </a>
+            @else
+                <p class="text-sm font-medium text-ink">Nothing logged yet.</p>
+                <p class="mt-1 text-sm text-muted">Make a request to your app and it will show up here.</p>
+            @endif
         </div>
     @else
-        <table class="w-full text-sm">
-            <thead class="bg-gray-50 border-b border-gray-200">
-                <tr>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Method</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Path</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Status</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Duration</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Memory</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Queries</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Time</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                @foreach ($requestLogs as $requestLog)
-                    @php
-                        $methodColors = [
-                            'GET'    => 'bg-green-100 text-green-800',
-                            'POST'   => 'bg-blue-100 text-blue-800',
-                            'PUT'    => 'bg-yellow-100 text-yellow-800',
-                            'PATCH'  => 'bg-yellow-100 text-yellow-800',
-                            'DELETE' => 'bg-red-100 text-red-800',
-                        ];
-                        $methodColor = $methodColors[$requestLog->method] ?? 'bg-gray-100 text-gray-800';
-                        $statusCode  = $requestLog->status_code;
-                        $statusColor = match(true) {
-                            $statusCode >= 500 => 'bg-red-100 text-red-800',
-                            $statusCode >= 400 => 'bg-yellow-100 text-yellow-800',
-                            $statusCode >= 300 => 'bg-sky-100 text-sky-800',
-                            default            => 'bg-green-100 text-green-800',
-                        };
-                    @endphp
-                    <tr class="hover:bg-gray-50 transition-colors cursor-pointer"
-                        onclick="window.location='{{ route('larascope.show', $requestLog) }}'">
+        @php
+            // The bars are scaled against the slowest request on this page, so
+            // each page reads as its own trace rather than a global ratio.
+            $slowestOnPage = max(1.0, (float) $requestLogs->max('duration_ms'));
+        @endphp
 
-                        <td class="px-4 py-3">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold {{ $methodColor }}">
-                                {{ $requestLog->method }}
-                            </span>
-                        </td>
-
-                        <td class="px-4 py-3 max-w-xs">
-                            <a href="{{ route('larascope.show', $requestLog) }}"
-                               class="text-indigo-600 hover:underline font-mono text-xs truncate block">
-                                /{{ $requestLog->path }}
-                            </a>
-                            @if ($requestLog->route_name)
-                                <span class="text-gray-400 text-xs font-mono">{{ $requestLog->route_name }}</span>
-                            @endif
-                        </td>
-
-                        <td class="px-4 py-3">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold {{ $statusColor }}">
-                                {{ $statusCode }}
-                            </span>
-                        </td>
-
-                        <td class="px-4 py-3 font-mono text-xs text-gray-700">
-                            {{ number_format($requestLog->duration_ms, 2) }} ms
-                        </td>
-
-                        <td class="px-4 py-3 font-mono text-xs text-gray-700">
-                            {{ number_format($requestLog->memory_peak_mb, 2) }} MB
-                        </td>
-
-                        <td class="px-4 py-3">
-                            @if ($requestLog->query_count > 0)
-                                <span class="inline-flex items-center gap-1.5">
-                                    <span class="font-mono text-xs text-gray-700">{{ $requestLog->query_count }}</span>
-                                    @if ($requestLog->hasSlowQueries())
-                                        <span class="bg-orange-100 text-orange-700 text-xs px-1.5 py-0.5 rounded font-semibold">
-                                            slow
-                                        </span>
-                                    @endif
-                                </span>
-                            @else
-                                <span class="text-gray-300 text-xs">—</span>
-                            @endif
-                        </td>
-
-                        <td class="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
-                            {{ $requestLog->created_at->diffForHumans() }}
-                        </td>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b border-rule bg-raised font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+                        <th scope="col" class="px-4 py-2.5 font-medium">Method</th>
+                        <th scope="col" class="px-4 py-2.5 font-medium">Path</th>
+                        <th scope="col" class="px-4 py-2.5 font-medium">Status</th>
+                        <th scope="col" class="px-4 py-2.5 font-medium">Duration</th>
+                        <th scope="col" class="hidden px-4 py-2.5 font-medium lg:table-cell">Memory</th>
+                        <th scope="col" class="px-4 py-2.5 font-medium">Queries</th>
+                        <th scope="col" class="hidden px-4 py-2.5 font-medium lg:table-cell">User</th>
+                        <th scope="col" class="px-4 py-2.5 font-medium">Age</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+
+                <tbody class="divide-y divide-rule">
+                    @foreach ($requestLogs as $requestLog)
+                        @php
+                            $methodTone = [
+                                'GET'    => 'border-nominal/40 bg-nominal/5 text-nominal',
+                                'POST'   => 'border-info/40 bg-info/5 text-info',
+                                'PUT'    => 'border-attention/40 bg-attention/5 text-attention',
+                                'PATCH'  => 'border-attention/40 bg-attention/5 text-attention',
+                                'DELETE' => 'border-fault/40 bg-fault/5 text-fault',
+                            ][$requestLog->method] ?? 'border-rule bg-raised text-muted';
+
+                            $statusCode = $requestLog->status_code;
+                            $statusTone = match (true) {
+                                $statusCode >= 500 => 'text-fault',
+                                $statusCode >= 400 => 'text-attention',
+                                $statusCode >= 300 => 'text-info',
+                                default            => 'text-nominal',
+                            };
+
+                            $isSlow = $requestLog->hasSlowQueries();
+
+                            // Square-root scale: latency spans orders of magnitude, and a
+                            // linear bar would flatten every normal request into nothing
+                            // next to one multi-second outlier. Ordering is preserved.
+                            $durationShare = max(4.0, sqrt((float) $requestLog->duration_ms / $slowestOnPage) * 100);
+                        @endphp
+
+                        <tr class="cursor-pointer transition-colors hover:bg-raised focus-within:bg-raised"
+                            onclick="window.location='{{ route('larascope.show', $requestLog) }}'">
+
+                            <td class="px-4 py-2.5">
+                                <span class="inline-block rounded border px-1.5 py-0.5 font-mono text-[11px] leading-none {{ $methodTone }}">
+                                    {{ $requestLog->method }}
+                                </span>
+                            </td>
+
+                            <td class="max-w-xs px-4 py-2.5">
+                                <a href="{{ route('larascope.show', $requestLog) }}"
+                                   class="block truncate font-mono text-xs text-ink hover:text-signal transition-colors">
+                                    /{{ $requestLog->path }}
+                                </a>
+                                @if ($requestLog->route_name)
+                                    <span class="block truncate font-mono text-[10px] text-muted">{{ $requestLog->route_name }}</span>
+                                @endif
+                            </td>
+
+                            <td class="px-4 py-2.5 font-mono text-xs font-semibold {{ $statusTone }}">
+                                {{ $statusCode }}
+                            </td>
+
+                            {{-- The bar is the point: the outlier is visible before you read a number. --}}
+                            <td class="px-4 py-2.5">
+                                <span class="font-mono text-xs text-ink">{{ number_format($requestLog->duration_ms, 1) }}<span class="text-muted"> ms</span></span>
+                                <span class="mt-1 block h-[3px] w-24 overflow-hidden bg-rule" aria-hidden="true">
+                                    <span class="block h-full {{ $isSlow ? 'bg-attention' : 'bg-signal' }}"
+                                          style="width: {{ $durationShare }}%"></span>
+                                </span>
+                            </td>
+
+                            <td class="hidden px-4 py-2.5 font-mono text-xs text-muted lg:table-cell">
+                                {{ number_format($requestLog->memory_peak_mb, 1) }} MB
+                            </td>
+
+                            <td class="px-4 py-2.5">
+                                @if ($requestLog->query_count > 0)
+                                    <span class="font-mono text-xs text-ink">{{ $requestLog->query_count }}</span>
+                                    @if ($isSlow)
+                                        <span class="ml-1 rounded border border-attention/40 bg-attention/10 px-1 py-0.5 font-mono text-[10px] leading-none text-attention">slow</span>
+                                    @endif
+                                @else
+                                    <span class="font-mono text-xs text-muted">0</span>
+                                @endif
+                            </td>
+
+                            <td class="hidden px-4 py-2.5 font-mono text-xs text-muted lg:table-cell">
+                                {{ $requestLog->user_id ? '#' . $requestLog->user_id : '—' }}
+                            </td>
+
+                            <td class="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-muted"
+                                title="{{ $requestLog->created_at->format('Y-m-d H:i:s') }}">
+                                {{ $requestLog->created_at->diffForHumans(null, true) }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
 
         @if ($requestLogs->hasPages())
-            <div class="px-4 py-3 border-t border-gray-100">
-                {{ $requestLogs->links('pagination::tailwind') }}
+            <div class="flex items-center justify-between border-t border-rule px-4 py-3">
+                <p class="font-mono text-[11px] text-muted">
+                    {{ number_format($requestLogs->firstItem()) }}–{{ number_format($requestLogs->lastItem()) }}
+                    of {{ number_format($requestLogs->total()) }}
+                </p>
+
+                <div class="flex gap-2 font-mono text-[11px]">
+                    @if ($requestLogs->onFirstPage())
+                        <span class="rounded border border-rule px-2.5 py-1 text-muted opacity-40">Previous</span>
+                    @else
+                        <a href="{{ $requestLogs->previousPageUrl() }}"
+                           class="rounded border border-rule px-2.5 py-1 text-muted hover:text-ink hover:border-muted transition-colors">Previous</a>
+                    @endif
+
+                    @if ($requestLogs->hasMorePages())
+                        <a href="{{ $requestLogs->nextPageUrl() }}"
+                           class="rounded border border-rule px-2.5 py-1 text-muted hover:text-ink hover:border-muted transition-colors">Next</a>
+                    @else
+                        <span class="rounded border border-rule px-2.5 py-1 text-muted opacity-40">Next</span>
+                    @endif
+                </div>
             </div>
         @endif
     @endif

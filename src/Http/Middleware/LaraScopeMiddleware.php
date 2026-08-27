@@ -1,8 +1,8 @@
 <?php
 
-namespace AmjadAH\LaraScope\Http\Middleware;
+namespace Amjad\LaraScope\Http\Middleware;
 
-use AmjadAH\LaraScope\Services\RequestLogger;
+use Amjad\LaraScope\Services\RequestLogger;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

@@ -1,9 +1,9 @@
 <?php
 
-namespace AmjadAH\LaraScope\Tests\Unit;
+namespace Amjad\LaraScope\Tests\Unit;
 
-use AmjadAH\LaraScope\Models\RequestLog;
-use AmjadAH\LaraScope\Tests\TestCase;
+use Amjad\LaraScope\Models\RequestLog;
+use Amjad\LaraScope\Tests\TestCase;
 
 class RequestLogModelTest extends TestCase
 {
@@ -43,6 +43,29 @@ class RequestLogModelTest extends TestCase
         $requestLog->queries = null;
 
         $this->assertFalse($requestLog->hasSlowQueries());
+    }
+
+    public function test_has_slow_queries_column_is_mass_assignable_and_cast_to_boolean(): void
+    {
+        RequestLog::create($this->makePayload(['has_slow_queries' => true]));
+
+        $log = RequestLog::first();
+
+        $this->assertTrue($log->has_slow_queries);
+    }
+
+    public function test_has_slow_queries_prefers_the_persisted_column_over_the_json_blob(): void
+    {
+        RequestLog::create($this->makePayload([
+            'has_slow_queries' => true,
+            'query_count'      => 1,
+            // The JSON blob disagrees with the column; the column wins.
+            'queries'          => [['sql' => 'select 1', 'time_ms' => 1.0, 'slow' => false, 'bindings' => []]],
+        ]));
+
+        $log = RequestLog::first();
+
+        $this->assertTrue($log->hasSlowQueries());
     }
 
     public function test_scope_with_queries_filters_out_requests_without_queries(): void

@@ -1,6 +1,6 @@
 <?php
 
-use AmjadAH\LaraScope\Http\Controllers\DashboardController;
+use Amjad\LaraScope\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 $dashboardPath       = config('larascope.dashboard.path', 'larascope');

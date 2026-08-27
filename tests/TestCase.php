@@ -1,8 +1,8 @@
 <?php
 
-namespace AmjadAH\LaraScope\Tests;
+namespace Amjad\LaraScope\Tests;
 
-use AmjadAH\LaraScope\LaraScopeServiceProvider;
+use Amjad\LaraScope\LaraScopeServiceProvider;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase

@@ -1,10 +1,10 @@
 <?php
 
-namespace AmjadAH\LaraScope\Tests\Unit;
+namespace Amjad\LaraScope\Tests\Unit;
 
-use AmjadAH\LaraScope\Services\DatabaseDriver;
-use AmjadAH\LaraScope\Services\RequestLogger;
-use AmjadAH\LaraScope\Tests\TestCase;
+use Amjad\LaraScope\Services\DatabaseDriver;
+use Amjad\LaraScope\Services\RequestLogger;
+use Amjad\LaraScope\Tests\TestCase;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -38,6 +38,7 @@ class RequestLoggerTest extends TestCase
         $this->assertArrayHasKey('memory_peak_mb', $payload);
         $this->assertArrayHasKey('query_count', $payload);
         $this->assertArrayHasKey('queries', $payload);
+        $this->assertArrayHasKey('has_slow_queries', $payload);
         $this->assertArrayHasKey('request_headers', $payload);
         $this->assertArrayHasKey('request_body', $payload);
         $this->assertArrayHasKey('response_body', $payload);
@@ -187,6 +188,53 @@ class RequestLoggerTest extends TestCase
         $payload = $this->requestLogger->buildPayload($request, $response, [], $startTime);
 
         $this->assertSame('{"ok":true}', $payload['response_body']);
+    }
+
+    public function test_build_payload_flags_has_slow_queries_when_a_query_exceeds_the_threshold(): void
+    {
+        $this->app['config']->set('larascope.queries.slow_threshold_ms', 100);
+
+        $request   = Request::create('/test', 'GET');
+        $response  = new Response('', 200);
+        $startTime = microtime(true);
+
+        $collectedQueries = [
+            ['sql' => 'select 1', 'bindings' => [], 'time_ms' => 50.0],
+            ['sql' => 'select * from big_table', 'bindings' => [], 'time_ms' => 200.0],
+        ];
+
+        $payload = $this->requestLogger->buildPayload($request, $response, $collectedQueries, $startTime);
+
+        $this->assertTrue($payload['has_slow_queries']);
+    }
+
+    public function test_build_payload_has_slow_queries_is_false_when_every_query_is_fast(): void
+    {
+        $this->app['config']->set('larascope.queries.slow_threshold_ms', 100);
+
+        $request   = Request::create('/test', 'GET');
+        $response  = new Response('', 200);
+        $startTime = microtime(true);
+
+        $collectedQueries = [
+            ['sql' => 'select 1', 'bindings' => [], 'time_ms' => 5.0],
+            ['sql' => 'select 2', 'bindings' => [], 'time_ms' => 12.0],
+        ];
+
+        $payload = $this->requestLogger->buildPayload($request, $response, $collectedQueries, $startTime);
+
+        $this->assertFalse($payload['has_slow_queries']);
+    }
+
+    public function test_build_payload_has_slow_queries_is_false_when_no_queries_ran(): void
+    {
+        $request   = Request::create('/test', 'GET');
+        $response  = new Response('', 200);
+        $startTime = microtime(true);
+
+        $payload = $this->requestLogger->buildPayload($request, $response, [], $startTime);
+
+        $this->assertFalse($payload['has_slow_queries']);
     }
 
     public function test_store_delegates_to_driver(): void

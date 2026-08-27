@@ -1,9 +1,9 @@
 <?php
 
-namespace AmjadAH\LaraScope\Tests\Unit;
+namespace Amjad\LaraScope\Tests\Unit;
 
-use AmjadAH\LaraScope\Services\DatabaseDriver;
-use AmjadAH\LaraScope\Tests\TestCase;
+use Amjad\LaraScope\Services\DatabaseDriver;
+use Amjad\LaraScope\Tests\TestCase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -44,6 +44,35 @@ class DatabaseDriverTest extends TestCase
             'method'      => 'GET',
             'path'        => 'api/users',
             'status_code' => 200,
+        ]);
+    }
+
+    public function test_log_persists_the_has_slow_queries_flag(): void
+    {
+        $payload = [
+            'method'           => 'GET',
+            'url'              => 'http://localhost/api/reports',
+            'path'             => 'api/reports',
+            'route_name'       => null,
+            'ip_address'       => '127.0.0.1',
+            'user_id'          => null,
+            'status_code'      => 200,
+            'duration_ms'      => 900.0,
+            'memory_peak_mb'   => 30.0,
+            'query_count'      => 1,
+            'queries'          => [['sql' => 'select 1', 'bindings' => [], 'time_ms' => 500.0, 'slow' => true]],
+            'has_slow_queries' => true,
+            'request_headers'  => null,
+            'request_body'     => null,
+            'response_body'    => null,
+            'created_at'       => now()->toDateTimeString(),
+        ];
+
+        $this->driver->log($payload);
+
+        $this->assertDatabaseHas('larascope_request_logs', [
+            'path'             => 'api/reports',
+            'has_slow_queries' => true,
         ]);
     }
 

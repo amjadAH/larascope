@@ -1,6 +1,6 @@
 <?php
 
-namespace AmjadAH\LaraScope\Services;
+namespace Amjad\LaraScope\Services;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
