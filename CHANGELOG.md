@@ -5,7 +5,19 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.1.0] - 2026-08-30
+
+### Breaking
+
+- **`response_body` is now stored as `{"content-type": ..., "content": ...}` instead of a raw
+  string.** The column type (`json`), the model's `'array'` cast, and the payload builder
+  previously disagreed on this field's shape: with `include_response_body` enabled (off by
+  default), inserting a non-JSON body (e.g. HTML) failed on MySQL/PostgreSQL because the raw
+  string isn't valid JSON, and on any backend where the insert did succeed, the `'array'` cast
+  failed to decode it back and silently returned `null`. In practice nothing consuming this
+  field could have worked before this release. Code reading `$requestLog->response_body`
+  directly needs to change from treating it as a string to `$requestLog->response_body['content']`
+  (and `['content-type']` for the response's captured `Content-Type` header).
 
 ### Fixed
 
