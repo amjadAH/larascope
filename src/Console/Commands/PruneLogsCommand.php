@@ -16,7 +16,10 @@ class PruneLogsCommand extends Command
         $retainDays = (int) config('larascope.pruning.retain_days', 30);
         $cutoffDate = now()->subDays($retainDays);
 
-        $deletedCount = DB::table('larascope_request_logs')
+        $connection = config('larascope.database.connection');
+        $table = config('larascope.database.table', 'larascope_request_logs');
+
+        $deletedCount = DB::connection($connection)->table($table)
             ->where('created_at', '<', $cutoffDate)
             ->delete();
 

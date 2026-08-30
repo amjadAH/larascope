@@ -5,6 +5,18 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-08-30
+
+### Fixed
+
+- **`larascope:prune` now honours the configured connection and table.** The command
+  queried `larascope_request_logs` on the default connection regardless of
+  `larascope.database.connection` and `larascope.database.table`, which the writer, the
+  model and the migration all already respect. On an install with a custom table name the
+  prune matched nothing and reported `0` pruned rows; on one with a dedicated logging
+  connection it ran against the wrong database. Either way retention was silently never
+  applied and logs grew without bound.
+
 ## [2.1.0] - 2026-08-30
 
 ### Breaking
