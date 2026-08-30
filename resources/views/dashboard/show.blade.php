@@ -178,10 +178,15 @@
     </section>
 @endif
 
-@if (!empty($requestLog->response_body))
+@if (!empty($requestLog->response_body['content']))
     <section class="mb-6">
-        <h2 class="mb-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Response body</h2>
-        <pre class="overflow-x-auto rounded-md border border-rule bg-surface px-4 py-3 font-mono text-xs text-ink whitespace-pre-wrap break-all">{{ $requestLog->response_body }}</pre>
+        <h2 class="mb-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+            Response body
+            @if (!empty($requestLog->response_body['content-type']))
+                <span class="mx-1.5 text-rule">/</span>{{ $requestLog->response_body['content-type'] }}
+            @endif
+        </h2>
+        <pre class="overflow-x-auto rounded-md border border-rule bg-surface px-4 py-3 font-mono text-xs text-ink whitespace-pre-wrap break-all">{{ $requestLog->response_body['content'] }}</pre>
     </section>
 @endif
 

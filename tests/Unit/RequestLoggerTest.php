@@ -182,12 +182,31 @@ class RequestLoggerTest extends TestCase
         $this->app['config']->set('larascope.logging.include_response_body', true);
 
         $request   = Request::create('/test', 'GET');
-        $response  = new Response('{"ok":true}', 200);
+        $response  = new Response('{"ok":true}', 200, ['Content-Type' => 'application/json']);
         $startTime = microtime(true);
 
         $payload = $this->requestLogger->buildPayload($request, $response, [], $startTime);
 
-        $this->assertSame('{"ok":true}', $payload['response_body']);
+        $this->assertSame([
+            'content-type' => 'application/json',
+            'content'      => '{"ok":true}',
+        ], $payload['response_body']);
+    }
+
+    public function test_build_payload_response_body_content_type_is_null_when_header_absent(): void
+    {
+        $this->app['config']->set('larascope.logging.include_response_body', true);
+
+        $request   = Request::create('/test', 'GET');
+        $response  = new Response('plain text body', 200);
+        $startTime = microtime(true);
+
+        $payload = $this->requestLogger->buildPayload($request, $response, [], $startTime);
+
+        $this->assertSame([
+            'content-type' => null,
+            'content'      => 'plain text body',
+        ], $payload['response_body']);
     }
 
     public function test_build_payload_flags_has_slow_queries_when_a_query_exceeds_the_threshold(): void

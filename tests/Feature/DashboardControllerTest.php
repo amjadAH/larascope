@@ -242,6 +242,24 @@ class DashboardControllerTest extends TestCase
         $response->assertSee('api/users/1');
     }
 
+    public function test_dashboard_show_renders_response_body_content_and_content_type(): void
+    {
+        $requestLog = RequestLog::create($this->makePayload([
+            'path'          => 'api/users/1',
+            'method'        => 'GET',
+            'response_body' => [
+                'content-type' => 'text/plain',
+                'content'      => 'hello world',
+            ],
+        ]));
+
+        $response = $this->get('/larascope/' . $requestLog->id);
+
+        $response->assertStatus(200);
+        $response->assertSee('hello world');
+        $response->assertSee('text/plain');
+    }
+
     public function test_dashboard_is_disabled_when_config_is_false(): void
     {
         $this->app['config']->set('larascope.dashboard.enabled', false);

@@ -200,7 +200,7 @@ Each log entry stores 16 fields:
 | `queries` | `json` | Array of queries with `sql`, `bindings`, `time_ms`, and `slow` flag |
 | `request_headers` | `json\|null` | Sanitised request headers |
 | `request_body` | `json\|null` | Request input (opt-in) |
-| `response_body` | `string\|null` | Response content (opt-in) |
+| `response_body` | `json\|null` | Response content (opt-in), stored as `{"content-type": ..., "content": ...}` |
 | `created_at` | `timestamp` | When the log entry was created |
 
 ### Indexes

@@ -106,7 +106,8 @@ class RequestLogger
         return $request->all();
     }
 
-    private function buildResponseBody(Response $response): ?string
+    /** @return array{content-type: string|null, content: string}|null */
+    private function buildResponseBody(Response $response): ?array
     {
         if (!config('larascope.logging.include_response_body', false)) {
             return null;
@@ -114,6 +115,13 @@ class RequestLogger
 
         $content = $response->getContent();
 
-        return $content !== false && $content !== '' ? $content : null;
+        if ($content === false || $content === '') {
+            return null;
+        }
+
+        return [
+            'content-type' => $response->headers->get('Content-Type'),
+            'content'      => $content,
+        ];
     }
 }
