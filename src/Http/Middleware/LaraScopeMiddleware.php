@@ -18,7 +18,30 @@ class LaraScopeMiddleware
 
     private bool $shouldSkip = false;
 
-    public function __construct(private readonly RequestLogger $requestLogger) {}
+    public function __construct(private readonly RequestLogger $requestLogger)
+    {
+        // Registered once — here in the constructor — rather than inside
+        // handle(). The middleware is bound as a singleton, so under Octane
+        // this same instance survives across many requests; registering the
+        // listener per-request would stack a new closure onto the shared
+        // event dispatcher on every request, causing each query to be
+        // captured once per accumulated listener and leaking memory for the
+        // life of the worker. The constructor runs exactly once per
+        // instance regardless of runtime, so this is safe under both
+        // PHP-FPM (fresh instance per request) and Octane (one instance for
+        // many requests).
+        DB::listen(function (object $query): void {
+            if ($this->shouldSkip || !config('larascope.queries.enabled', true)) {
+                return;
+            }
+
+            $this->collectedQueries[] = [
+                'sql'      => $query->sql,
+                'bindings' => $query->bindings,
+                'time_ms'  => $query->time,
+            ];
+        });
+    }
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -33,24 +56,7 @@ class LaraScopeMiddleware
             return $next($request);
         }
 
-        // Capture start time here, not in the constructor, so it reflects
-        // the actual moment this request began to be handled.
         $this->startTime = microtime(true);
-
-        if (config('larascope.queries.enabled', true)) {
-            // DB::listen registers a listener on Laravel's event dispatcher.
-            // In PHP-FPM each request runs in a fresh process, so listeners
-            // reset automatically. Note: long-running servers (Octane /
-            // FrankenPHP) require additional Octane-specific handling.
-
-            DB::listen(function (object $query): void {
-                $this->collectedQueries[] = [
-                    'sql'      => $query->sql,
-                    'bindings' => $query->bindings,
-                    'time_ms'  => $query->time,
-                ];
-            });
-        }
 
         return $next($request);
     }

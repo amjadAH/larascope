@@ -6,6 +6,7 @@ use Amjad\LaraScope\Http\Middleware\LaraScopeMiddleware;
 use Amjad\LaraScope\Services\RequestLogger;
 use Amjad\LaraScope\Tests\TestCase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Mockery;
 use Mockery\MockInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -148,5 +149,43 @@ class LaraScopeMiddlewareTest extends TestCase
 
         // record() should be called exactly once (for the second request only).
         $spy->shouldHaveReceived('record')->once();
+    }
+
+    public function test_query_listener_does_not_accumulate_across_requests(): void
+    {
+        // Regression test: the middleware is bound as a singleton (needed so
+        // terminate() sees the same instance as handle()), and under Octane
+        // that same instance handles every request on the worker. If
+        // DB::listen() were registered inside handle(), each request would
+        // stack another listener onto the shared event dispatcher, so a
+        // single query on request N would be captured N times.
+        $capturedQueries = [];
+
+        /** @var MockInterface $logger */
+        $logger = Mockery::mock(RequestLogger::class);
+        $logger->shouldReceive('record')
+            ->andReturnUsing(function (Request $_request, Response $_response, array $collectedQueries) use (&$capturedQueries): void {
+                $capturedQueries[] = $collectedQueries;
+            });
+
+        $middleware = new LaraScopeMiddleware($logger);
+
+        $runOneQueryRequest = function (LaraScopeMiddleware $middleware, string $path): void {
+            $request  = Request::create($path, 'GET');
+            $response = $middleware->handle($request, function () {
+                DB::select('select 1');
+
+                return new Response('ok', 200);
+            });
+            $middleware->terminate($request, $response);
+        };
+
+        $runOneQueryRequest($middleware, '/first');
+        $runOneQueryRequest($middleware, '/second');
+
+        // Each request ran exactly one query — it must be captured exactly
+        // once per request, not once per listener accumulated so far.
+        $this->assertCount(1, $capturedQueries[0]);
+        $this->assertCount(1, $capturedQueries[1]);
     }
 }

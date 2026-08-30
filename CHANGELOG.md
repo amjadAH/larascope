@@ -5,6 +5,20 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Octane: query listener no longer accumulates across requests.** `DB::listen()` was
+  registered inside `LaraScopeMiddleware::handle()`, which runs on every request. Since the
+  middleware is bound as a singleton (required so `terminate()` sees the same instance as
+  `handle()`), a persistent runtime like Octane reuses that instance for many requests, so a
+  new listener closure was stacked onto the shared event dispatcher every time — worker
+  memory grew unbounded, and each query got captured once per accumulated listener, inflating
+  `query_count` and duplicating entries in `queries` the longer a worker stayed alive. The
+  listener is now registered once, in the constructor, which runs exactly once per instance
+  under both PHP-FPM (fresh instance per request) and Octane (one instance for many requests).
+
 ## [2.0.0] - 2026-08-27
 
 ### Breaking
